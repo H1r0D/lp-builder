@@ -1,4 +1,5 @@
 // HTML解析ユーティリティ（汎用パーサー）
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as cheerio from 'cheerio';
 import type { LP, Section, HeroData, FeaturesData, FAQData, FooterData, FeatureItem, FAQItem } from '@/types/lp';
 import { getSampleByUrl } from './samples';
@@ -14,7 +15,7 @@ function cleanText(text: string): string {
 }
 
 // Hero セクションを抽出
-function extractHero($: cheerio.CheerioAPI): Section | null {
+function extractHero($: any): Section | null {
     // h1を探す
     const h1 = $('h1').first();
     if (!h1.length) return null;
@@ -60,11 +61,11 @@ function extractHero($: cheerio.CheerioAPI): Section | null {
 }
 
 // Features セクションを抽出
-function extractFeatures($: cheerio.CheerioAPI): Section | null {
+function extractFeatures($: any): Section | null {
     const items: FeatureItem[] = [];
 
     // h3やカード要素を探す
-    $('h3, .feature, .card, .service-item, article').each((_, el) => {
+    $('h3, .feature, .card, .service-item, article').each((_: any, el: any) => {
         if (items.length >= 6) return;
 
         const $el = $(el);
@@ -82,7 +83,7 @@ function extractFeatures($: cheerio.CheerioAPI): Section | null {
 
     if (items.length === 0) {
         // フォールバック: h2以降の段落を特徴として抽出
-        $('h2').each((_, h2) => {
+        $('h2').each((_: any, h2: any) => {
             if (items.length >= 3) return;
             const $h2 = $(h2);
             const title = cleanText($h2.text());
@@ -111,11 +112,11 @@ function extractFeatures($: cheerio.CheerioAPI): Section | null {
 }
 
 // FAQ セクションを抽出
-function extractFAQ($: cheerio.CheerioAPI): Section | null {
+function extractFAQ($: any): Section | null {
     const items: FAQItem[] = [];
 
     // dt/ddペアを探す
-    $('dt').each((_, dt) => {
+    $('dt').each((_: any, dt: any) => {
         if (items.length >= 6) return;
         const $dt = $(dt);
         const q = cleanText($dt.text());
@@ -127,7 +128,7 @@ function extractFAQ($: cheerio.CheerioAPI): Section | null {
 
     // detailsタグを探す
     if (items.length === 0) {
-        $('details').each((_, details) => {
+        $('details').each((_: any, details: any) => {
             if (items.length >= 6) return;
             const $details = $(details);
             const q = cleanText($details.find('summary').text());
@@ -152,7 +153,7 @@ function extractFAQ($: cheerio.CheerioAPI): Section | null {
 }
 
 // Footer セクションを抽出
-function extractFooter($: cheerio.CheerioAPI): Section | null {
+function extractFooter($: any): Section | null {
     const footer = $('footer');
     if (!footer.length) return null;
 
@@ -168,7 +169,7 @@ function extractFooter($: cheerio.CheerioAPI): Section | null {
 
     // リンクを抽出
     const links: { label: string; url: string }[] = [];
-    footer.find('a').each((_, a) => {
+    footer.find('a').each((_: any, a: any) => {
         if (links.length >= 5) return;
         const $a = $(a);
         const label = cleanText($a.text());

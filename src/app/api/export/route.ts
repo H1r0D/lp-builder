@@ -54,11 +54,14 @@ Generated at: ${new Date().toISOString()}
         }
 
         // ZIPを生成
-        const zipBlob = await zip.generateAsync({
+        const zipBuffer = await zip.generateAsync({
             type: 'nodebuffer',
             compression: 'DEFLATE',
             compressionOptions: { level: 9 }
         });
+
+        // BufferをUint8Arrayに変換
+        const zipBlob = new Uint8Array(zipBuffer);
 
         // レスポンスを返す
         return new NextResponse(zipBlob, {
