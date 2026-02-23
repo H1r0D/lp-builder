@@ -22,6 +22,9 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Tag, X } from 'lucide-react';
 
 /* ─── Icons ─── */
 function IconAlertCircle({ className }: { className?: string }) {
@@ -99,6 +102,7 @@ const MOCK_PROJECTS: Project[] = [
         json_content: {},
         slug: null,
         thumbnail_url: null,
+        tags: ['キャンペーン', '春'],
     },
     {
         id: 'mock-2',
@@ -110,6 +114,7 @@ const MOCK_PROJECTS: Project[] = [
         json_content: {},
         slug: null,
         thumbnail_url: null,
+        tags: ['編集中'],
     },
 ];
 
@@ -117,6 +122,58 @@ export default function DashboardPage() {
     const router = useRouter();
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+    const [selectedFilterTag, setSelectedFilterTag] = useState<string | null>(null);
+    const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+    const [editingProject, setEditingProject] = useState<Project | null>(null);
+    const [newTagInput, setNewTagInput] = useState("");
+
+    const handleOpenTagModal = (project: Project) => {
+        setEditingProject(project);
+        setNewTagInput("");
+        setIsTagModalOpen(true);
+    };
+
+    const handleAddTag = () => {
+        if (!newTagInput.trim() || !editingProject) return;
+
+        const newTag = newTagInput.trim();
+        const currentTags = editingProject.tags || [];
+
+        if (!currentTags.includes(newTag)) {
+            const updatedProjects = projects.map(p =>
+                p.id === editingProject.id
+                    ? { ...p, tags: [...currentTags, newTag] }
+                    : p
+            );
+            setProjects(updatedProjects);
+            setEditingProject({ ...editingProject, tags: [...currentTags, newTag] });
+        }
+        setNewTagInput("");
+    };
+
+    const handleToggleTag = (tag: string) => {
+        if (!editingProject) return;
+        const currentTags = editingProject.tags || [];
+
+        // Add if missing, remove if present
+        let newTags;
+        if (currentTags.includes(tag)) {
+            newTags = currentTags.filter(t => t !== tag);
+        } else {
+            newTags = [...currentTags, tag];
+        }
+
+        const updatedProjects = projects.map(p =>
+            p.id === editingProject.id ? { ...p, tags: newTags } : p
+        );
+        setProjects(updatedProjects);
+        setEditingProject({ ...editingProject, tags: newTags });
+    };
+
+    const allTags = Array.from(new Set(projects.flatMap(p => p.tags || [])));
+    const displayedProjects = selectedFilterTag
+        ? projects.filter(p => p.tags?.includes(selectedFilterTag))
+        : projects;
 
     // Mock Fetch
     useEffect(() => {
@@ -177,19 +234,42 @@ export default function DashboardPage() {
                     </AlertDescription>
                 </Alert>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
                         <h2 className="text-lg font-bold text-slate-800 tracking-tight">プロジェクト一覧</h2>
                         <p className="text-[13px] font-medium text-slate-500 mt-1">管理中のランディングページ（{projects.length}件）</p>
                     </div>
-                    <Button
-                        size="sm"
-                        onClick={handleCreateNew}
-                        className="bg-brand hover:bg-brand/90 text-white shadow-sm shadow-brand/20 h-9 px-5 rounded-lg text-[13px] font-bold transition-all active:scale-95"
-                    >
-                        <IconPlus className="w-4 h-4 mr-1.5" />
-                        新規ページ作成
-                    </Button>
+                    <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Button
+                                size="sm"
+                                variant={selectedFilterTag === null ? "secondary" : "ghost"}
+                                onClick={() => setSelectedFilterTag(null)}
+                                className={`h-8 rounded-full text-xs font-bold px-4 ${selectedFilterTag === null ? 'bg-slate-800 text-white hover:bg-slate-700' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}
+                            >
+                                すべて
+                            </Button>
+                            {allTags.map(tag => (
+                                <Button
+                                    key={tag}
+                                    size="sm"
+                                    variant={selectedFilterTag === tag ? "secondary" : "ghost"}
+                                    onClick={() => setSelectedFilterTag(tag)}
+                                    className={`h-8 rounded-full text-xs font-bold px-4 ${selectedFilterTag === tag ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    {tag}
+                                </Button>
+                            ))}
+                        </div>
+                        <Button
+                            size="sm"
+                            onClick={handleCreateNew}
+                            className="bg-brand hover:bg-brand/90 text-white shadow-sm shadow-brand/20 h-9 px-4 rounded-lg text-[13px] font-bold transition-all active:scale-95 shrink-0 ml-1"
+                        >
+                            <IconPlus className="w-4 h-4 mr-1.5" />
+                            新規作成
+                        </Button>
+                    </div>
                 </div>
 
                 {isLoadingProjects ? (
@@ -216,7 +296,7 @@ export default function DashboardPage() {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {projects.map((project) => {
+                        {displayedProjects.map((project) => {
                             // Dummy completion calculating based on id to simulate realistic data
                             const nameLength = project.title.length;
                             const isTitleSet = project.title !== '無題のLP';
@@ -227,7 +307,7 @@ export default function DashboardPage() {
                             const progressPercent = Math.round((completedTasks / 3) * 100);
 
                             return (
-                                <Card key={project.id} className="overflow-hidden bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow rounded-xl">
+                                <Card key={project.id} className="overflow-hidden bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow rounded-xl py-0 gap-0">
                                     <CardContent className="p-0">
                                         <div className="flex flex-col md:flex-row">
                                             {/* 2. Thumbnail & Basic Info */}
@@ -241,8 +321,19 @@ export default function DashboardPage() {
 
                                                 {/* Basic Info */}
                                                 <div className="flex-1 flex flex-col min-w-0 py-1">
-                                                    <div className="flex items-start justify-between gap-4 mb-1">
-                                                        <h3 className="text-lg font-bold text-slate-800 truncate">{project.title}</h3>
+                                                    <div className="flex items-start justify-between gap-4 mb-2">
+                                                        <div className="min-w-0">
+                                                            <h3 className="text-lg font-bold text-slate-800 truncate mb-1">{project.title}</h3>
+                                                            {project.tags && project.tags.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1.5 mt-1.5 mb-2">
+                                                                    {project.tags.map(tag => (
+                                                                        <span key={tag} className="bg-slate-100 text-slate-600 text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-bold border border-slate-200/50 transition-colors">
+                                                                            {tag}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                         <Badge
                                                             className={`shrink-0 h-6 px-3 text-[11px] font-bold tracking-wider rounded-md border-none ${project.status === 'published'
                                                                 ? 'bg-brand text-white shadow-sm shadow-brand/20'
@@ -333,8 +424,15 @@ export default function DashboardPage() {
                                                         <DropdownMenuItem className="text-xs font-bold text-slate-600 py-2.5 px-3 rounded-lg focus:bg-slate-100 cursor-pointer">
                                                             複製して新しく作る
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem className="text-xs font-bold text-slate-600 py-2.5 px-3 rounded-lg focus:bg-slate-100 cursor-pointer">
-                                                            グループ編集
+                                                        <DropdownMenuItem
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                handleOpenTagModal(project);
+                                                            }}
+                                                            className="text-xs font-bold text-slate-600 py-2.5 px-3 rounded-lg focus:bg-slate-100 cursor-pointer"
+                                                        >
+                                                            <Tag className="w-4 h-4 mr-2" />
+                                                            タグを付与
                                                         </DropdownMenuItem>
                                                         <div className="h-px bg-slate-100 my-1 mx-2" />
                                                         <DropdownMenuItem
@@ -357,6 +455,77 @@ export default function DashboardPage() {
                     </div>
                 )}
             </div>
+            {/* Tag Modal */}
+            <Dialog open={isTagModalOpen} onOpenChange={setIsTagModalOpen}>
+                <DialogContent className="sm:max-w-md p-6 rounded-2xl border-slate-200 shadow-2xl">
+                    <DialogHeader className="mb-4">
+                        <DialogTitle className="text-xl font-bold text-slate-800">タグの付与・編集</DialogTitle>
+                        <DialogDescription className="text-sm text-slate-500 mt-1">
+                            タグを設定して整理しましょう。
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6 py-2">
+                        {/* Input new tag */}
+                        <div className="space-y-3">
+                            <label className="text-sm font-bold text-slate-700">新しいタグを追加</label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    placeholder="例: キャンペーン, 2026春..."
+                                    value={newTagInput}
+                                    onChange={(e) => setNewTagInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddTag();
+                                        }
+                                    }}
+                                    className="h-10 border-slate-200 focus-visible:ring-brand shadow-sm text-sm rounded-xl"
+                                />
+                                <Button onClick={handleAddTag} className="h-10 bg-slate-800 hover:bg-slate-900 text-white font-bold px-4 shadow-sm shrink-0 rounded-xl">
+                                    追加
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Existing Tags / Current Tags */}
+                        <div className="space-y-3">
+                            <h4 className="text-sm font-bold text-slate-700">登録済みのタグから選ぶ</h4>
+                            {allTags.length === 0 ? (
+                                <p className="text-[13px] text-slate-400">現在登録されているタグはありません。</p>
+                            ) : (
+                                <div className="flex flex-wrap gap-2 p-4 bg-slate-50 rounded-xl border border-slate-100 text-left">
+                                    {allTags.map(tag => {
+                                        const isSelected = editingProject?.tags?.includes(tag);
+                                        return (
+                                            <button
+                                                key={tag}
+                                                onClick={() => handleToggleTag(tag)}
+                                                className={`text-[11px] sm:text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${isSelected
+                                                    ? 'bg-brand text-white border-brand shadow-sm shadow-brand/20'
+                                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                                                    }`}
+                                            >
+                                                {tag}
+                                                {isSelected && <X className="w-3 h-3 ml-1.5 inline-block -mt-0.5" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <DialogFooter className="mt-4 pt-4 border-t border-slate-100 flex justify-end w-full">
+                        <Button
+                            className="bg-brand hover:bg-brand/90 text-white font-bold px-8 shadow-sm shadow-brand/20 h-10 rounded-xl"
+                            onClick={() => setIsTagModalOpen(false)}
+                        >
+                            保存する
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </DashboardShell>
     );
 }

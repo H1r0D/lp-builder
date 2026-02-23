@@ -29,9 +29,11 @@ import {
 } from '@/components/ui/accordion';
 import { Card, CardContent } from '@/components/ui/card';
 import { FullScreenLoader } from '@/components/ui/FullScreenLoader';
-import { User } from 'lucide-react';
+import { User, Gift, Copy, Check, X } from 'lucide-react';
 import { FaLine, FaXTwitter } from 'react-icons/fa6';
 import { SiHatenabookmark } from 'react-icons/si';
+import { Announcement, mockAnnouncements } from '@/lib/data/announcements';
+import { AnnouncementModal } from '@/components/dashboard/AnnouncementModal';
 
 /* ─── Icons ─── */
 function IconCheck({ className }: { className?: string }) {
@@ -113,6 +115,27 @@ export function DashboardShell({ children }: { children?: React.ReactNode }) {
     const { user, profile, isLoading: authLoading, signOut } = useAuth();
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isSimulatingLoad, setIsSimulatingLoad] = useState(false);
+    const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
+    const [hasCopied, setHasCopied] = useState(false);
+
+    // Announcements state
+    const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+    const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+
+    const handleAnnouncementClick = (announcement: Announcement) => {
+        setSelectedAnnouncement(announcement);
+        setIsAnnouncementModalOpen(true);
+    };
+
+    const handleCopyCode = async () => {
+        try {
+            await navigator.clipboard.writeText('HIRO-2026-WEB');
+            setHasCopied(true);
+            setTimeout(() => setHasCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    };
 
     const handleLogout = async () => {
         await signOut();
@@ -146,7 +169,7 @@ export function DashboardShell({ children }: { children?: React.ReactNode }) {
                         {/* Main Nav */}
                         <nav className="hidden md:flex items-center gap-7">
                             <Link href="/dashboard" className="text-sm font-bold text-brand relative after:absolute after:bottom-[-16px] after:left-0 after:right-0 after:h-0.5 after:bg-brand after:rounded-t-full">マイページ</Link>
-                            <Link href="#" className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">料金プラン</Link>
+                            <Link href="/pricing" className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">料金プラン</Link>
                             <Link href="#" className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">スタートガイド</Link>
                             <Link href="#" className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">お役立ち情報</Link>
                         </nav>
@@ -229,15 +252,15 @@ export function DashboardShell({ children }: { children?: React.ReactNode }) {
                         <div className="sticky top-14 w-84 h-[calc(100vh-56px)] overflow-y-auto overscroll-contain flex flex-col p-6 gap-6 pb-12 scrollbar-hide">
                             {/* ① ご利用状況 (Grouped Card) */}
                             <section aria-labelledby="usage-status">
-                                <Card className="shadow-sm border-slate-200/80 bg-white overflow-hidden rounded-xl">
+                                <Card className="shadow-sm border-slate-200/80 bg-white overflow-hidden rounded-xl py-0 gap-0">
                                     <CardContent className="p-0 flex flex-col">
                                         {/* Header */}
-                                        <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
-                                            <IconInfoCircle className="w-4 h-4 text-slate-500" />
+                                        <div className="px-4 py-1.5 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50 min-h-[40px]">
+                                            <IconInfoCircle className="w-4 h-4 text-slate-500 shrink-0" />
                                             <h2 id="usage-status" className="text-xs font-bold text-slate-700 tracking-wider">ご利用状況</h2>
                                         </div>
 
-                                        <div className="p-4 flex flex-col gap-4">
+                                        <div className="p-4 pt-3 flex flex-col gap-3">
                                             {/* Current Plan */}
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[11px] font-bold text-slate-500">現在のプラン</span>
@@ -259,16 +282,19 @@ export function DashboardShell({ children }: { children?: React.ReactNode }) {
                                             </div>
 
                                             {/* CTA Button */}
-                                            <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-500/20 font-bold text-xs h-9 tracking-wide transition-all active:scale-[0.98]">
+                                            <Button
+                                                onClick={() => router.push('/pricing')}
+                                                className="w-full bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-500/20 font-bold text-xs h-9 tracking-wide transition-all active:scale-[0.98]"
+                                            >
                                                 プラン・機能一覧を見る
                                             </Button>
                                         </div>
 
                                         {/* Feature Accordion */}
-                                        <div className="border-t border-slate-100 bg-slate-50/50 px-2 py-1">
+                                        <div className="border-t border-slate-100 bg-slate-50/50 px-2">
                                             <Accordion type="single" collapsible className="w-full border-none">
                                                 <AccordionItem value="features" className="border-none">
-                                                    <AccordionTrigger className="text-[11px] font-bold text-slate-600 hover:no-underline hover:text-brand px-2 py-2.5">
+                                                    <AccordionTrigger className="text-[11px] font-bold text-slate-600 hover:no-underline hover:text-brand px-2 py-2">
                                                         現在利用できる機能一覧
                                                     </AccordionTrigger>
                                                     <AccordionContent className="px-2 pb-3">
@@ -299,7 +325,7 @@ export function DashboardShell({ children }: { children?: React.ReactNode }) {
                             </section>
 
                             {/* Referral Banner (Premium Light Design with User Image) */}
-                            <Link href="/campaign/referral" className="block relative overflow-hidden rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-brand/30 transition-all group cursor-pointer shrink-0">
+                            <div onClick={() => setIsReferralModalOpen(true)} className="block relative overflow-hidden rounded-xl bg-amber-50/20 border-2 border-amber-300 shadow-md shadow-amber-500/10 hover:shadow-lg hover:border-amber-400 transition-all group cursor-pointer shrink-0">
                                 {/* Background Image */}
                                 <div className="absolute inset-0 z-0 pointer-events-none flex justify-end">
                                     <div className="relative w-[55%] h-full">
@@ -314,36 +340,43 @@ export function DashboardShell({ children }: { children?: React.ReactNode }) {
                                     <h3 className="text-[13px] font-bold tracking-tight text-slate-800 leading-snug mb-2 group-hover:text-amber-600 transition-colors duration-300">
                                         お友達招待で<br />両方に特別な特典を
                                     </h3>
-                                    <div className="text-[11px] font-medium text-slate-500 flex items-center gap-1 group-hover:text-amber-600 transition-colors duration-300">
+                                    <div className="text-[11px] font-bold text-amber-600 flex items-center gap-1 group-hover:text-amber-700 transition-colors duration-300">
                                         詳細を確認する
                                     </div>
                                 </div>
 
                                 {/* Decorative glow */}
-                                <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-amber-100 rounded-full blur-xl group-hover:bg-amber-200 transition-colors duration-500"></div>
-                            </Link>
+                                <div className="absolute -right-4 -bottom-4 w-16 h-16 bg-amber-200/50 rounded-full blur-xl group-hover:bg-amber-300/50 transition-colors duration-500"></div>
+                            </div>
 
                             {/* ② お知らせ */}
                             <div>
                                 <h3 className="text-xs font-black tracking-widest text-slate-400 uppercase mb-3 px-1">お知らせ</h3>
-                                <div className="space-y-3">
-                                    <div className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-brand/40 hover:shadow-md transition-all cursor-pointer group">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Badge className="bg-amber/10 text-amber hover:bg-amber/10 h-4.5 px-1.5 text-[9px] font-bold rounded border-none">アップデート</Badge>
-                                            <span className="text-[10px] font-medium text-slate-400">2026.02.22</span>
+                                <div className="space-y-3 relative group">
+                                    {mockAnnouncements.slice(0, 3).map((announcement) => (
+                                        <div
+                                            key={announcement.id}
+                                            onClick={() => handleAnnouncementClick(announcement)}
+                                            className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-brand/40 hover:shadow-md transition-all cursor-pointer group/item"
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Badge className="bg-brand/10 text-brand hover:bg-brand/10 h-4.5 px-1.5 text-[9px] font-bold rounded border-none">お知らせ</Badge>
+                                                <span className="text-[10px] font-medium text-slate-400">{announcement.date}</span>
+                                            </div>
+                                            <p className="text-[12px] font-bold text-slate-700 group-hover/item:text-brand transition-colors leading-relaxed line-clamp-2">
+                                                {announcement.title}
+                                            </p>
                                         </div>
-                                        <p className="text-[12px] font-bold text-slate-700 group-hover:text-brand transition-colors leading-relaxed">
-                                            AIチャットUIを大幅に改善しました！よりスムーズな対話が可能です。
-                                        </p>
-                                    </div>
-                                    <div className="p-3.5 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-brand/40 hover:shadow-md transition-all cursor-pointer group">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Badge className="bg-brand/10 text-brand hover:bg-brand/10 h-4.5 px-1.5 text-[9px] font-bold rounded border-none">お知らせ</Badge>
-                                            <span className="text-[10px] font-medium text-slate-400">2026.02.18</span>
-                                        </div>
-                                        <p className="text-[12px] font-bold text-slate-700 group-hover:text-brand transition-colors leading-relaxed">
-                                            Starterプランの機能を大きく拡張しました。
-                                        </p>
+                                    ))}
+
+                                    {/* 一覧へのリンク */}
+                                    <div className="text-right pt-2 px-1">
+                                        <Link href="/announcements" className="text-[11px] font-bold flex items-center justify-end text-slate-500 hover:text-brand transition-colors hover:-translate-y-[1px]">
+                                            一覧へ
+                                            <svg className="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                            </svg>
+                                        </Link>
                                     </div>
                                 </div>
                             </div>
@@ -581,6 +614,106 @@ export function DashboardShell({ children }: { children?: React.ReactNode }) {
 
             {/* Full Screen Loader Simulation */}
             <FullScreenLoader isLoading={isSimulatingLoad} />
+
+            {/* Referral Campaign Modal Overlay */}
+            {isReferralModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+                    {/* Darker Overlay */}
+                    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setIsReferralModalOpen(false)} />
+
+                    {/* Premium Modal Container */}
+                    <div className="relative w-full max-w-[480px] bg-white rounded-3xl shadow-2xl shadow-black/30 flex flex-col animate-in zoom-in-95 duration-200">
+
+                        {/* Custom Close Button for Image Overlay */}
+                        <button
+                            onClick={() => setIsReferralModalOpen(false)}
+                            className="absolute top-4 right-4 z-20 p-2 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full text-white/90 hover:text-white transition-all shadow-sm"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+
+                        {/* Full Bleed Header Image */}
+                        <div className="w-full h-48 sm:h-56 relative shrink-0">
+                            <img src="/image_3.png" alt="Gift Box" className="w-full h-full object-cover rounded-t-3xl" />
+                            {/* Subtle gradient at the bottom to transition into white content */}
+                            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+                        </div>
+
+                        {/* Content Area */}
+                        <div className="px-8 pb-10 pt-4 relative z-10 flex flex-col items-center justify-center text-center">
+
+                            <h2 className="text-[22px] md:text-2xl font-extrabold text-slate-900 tracking-tight mb-4 relative z-10 w-full text-center">
+                                お友達紹介で、<br className="sm:hidden" />両方に超お得な特典！
+                            </h2>
+                            <p className="text-sm md:text-base text-slate-600 mb-6 leading-relaxed relative z-10 text-center">
+                                あなたの紹介コードを使って、<br className="hidden sm:block" />
+                                お友達が新しく有料プランに登録すると...
+                            </p>
+
+                            {/* Bright Amber Highlight Box for Reward */}
+                            <div className="w-full bg-gradient-to-r from-amber-50 to-orange-50/80 border border-amber-200/60 rounded-2xl py-5 px-4 shadow-sm mb-6 relative overflow-hidden group">
+                                {/* Decor effects */}
+                                <div className="absolute -right-4 -top-4 w-20 h-20 bg-amber-200/40 rounded-full blur-xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+                                <div className="absolute -left-4 -bottom-4 w-20 h-24 bg-orange-200/40 rounded-full blur-xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
+
+                                <span className="block font-bold text-slate-800 relative z-10 text-sm md:text-base mb-1 text-center">
+                                    あなたとお友達の両方に
+                                </span>
+                                <span className="block text-2xl sm:text-[28px] font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600 relative z-10 text-center drop-shadow-sm">
+                                    『月額料金1ヶ月分無料』
+                                </span>
+                            </div>
+
+                            <p className="text-xs md:text-sm text-slate-500 mb-7 leading-relaxed font-medium relative z-10 text-center">
+                                周りの経営者やご友人を誘って、<br className="hidden sm:block" />お得にサイト運営を始めましょう！
+                            </p>
+
+                            {/* Refined Referral Code Box (Colorful & Responsive) */}
+                            <div className="w-full bg-gradient-to-br from-blue-50/80 to-cyan-50/80 border-2 border-dashed border-blue-200 rounded-2xl p-5 mb-8 relative group hover:border-brand/40 transition-colors shadow-sm overflow-hidden">
+                                <div className="absolute top-0 left-0 w-2 h-full bg-blue-400 group-hover:bg-brand transition-colors" />
+
+
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-2 w-full pl-0 sm:pl-2">
+                                    <div className="flex-1 min-w-0 overflow-visible w-full flex justify-center sm:justify-start py-1">
+                                        <span className="text-xl sm:text-2xl font-black text-brand tracking-wider font-mono select-all truncate leading-normal">HIRO-2026-WEB</span>
+                                    </div>
+                                    <Button
+                                        onClick={handleCopyCode}
+                                        variant={hasCopied ? "default" : "secondary"}
+                                        className={`w-full sm:w-auto shrink-0 transition-all font-bold rounded-xl h-11 px-5 shadow-sm ${hasCopied ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20' : 'bg-brand hover:bg-brand/90 text-white shadow-brand/20'}`}
+                                    >
+                                        {hasCopied ? (
+                                            <><Check className="w-4 h-4 mr-1.5" /> コピー完了</>
+                                        ) : (
+                                            <><Copy className="w-4 h-4 mr-1.5" /> コードをコピー</>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Premium SNS Shares */}
+                            <div className="w-full flex flex-col items-center">
+                                <p className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">SNSで共有する</p>
+                                <div className="flex gap-4 w-full">
+                                    <Button className="flex-1 h-12 bg-[#06C755] hover:bg-[#05b34c] text-white shadow-[0_4px_14px_0_rgba(6,199,85,0.39)] hover:shadow-[0_6px_20px_rgba(6,199,85,0.23)] hover:-translate-y-0.5 font-bold transition-all rounded-xl">
+                                        <FaLine className="w-5 h-5 mr-2" /> LINEで共有する
+                                    </Button>
+                                    <Button className="flex-1 h-12 bg-[#000000] hover:bg-slate-900 text-white shadow-[0_4px_14px_0_rgba(0,0,0,0.39)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.23)] hover:-translate-y-0.5 font-bold transition-all rounded-xl">
+                                        <FaXTwitter className="w-4 h-4 mr-2" /> ポストする
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Announcement Modal */}
+            <AnnouncementModal
+                isOpen={isAnnouncementModalOpen}
+                onClose={() => setIsAnnouncementModalOpen(false)}
+                announcement={selectedAnnouncement}
+            />
+
         </div >
     );
 }
