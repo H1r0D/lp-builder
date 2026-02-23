@@ -1,0 +1,75 @@
+
+> lp-builder@0.1.0 lint
+> eslint
+
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\app\api\parse\route.ts
+   18:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+   62:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  112:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  152:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\app\dashboard\analytics\page.tsx
+  18:5  warning  'Legend' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\app\dashboard\page.tsx
+    9:5   warning  'Tooltip' is defined but never used             @typescript-eslint/no-unused-vars
+   10:5   warning  'TooltipContent' is defined but never used      @typescript-eslint/no-unused-vars
+   11:5   warning  'TooltipTrigger' is defined but never used      @typescript-eslint/no-unused-vars
+   43:10  warning  'IconCheckCircle' is defined but never used     @typescript-eslint/no-unused-vars
+  117:11  warning  'router' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  164:11  warning  'published' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  165:11  warning  'drafts' is assigned a value but never used     @typescript-eslint/no-unused-vars
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\app\dashboard\settings\account\page.tsx
+  4:8   warning  'Link' is defined but never used         @typescript-eslint/no-unused-vars
+  9:16  warning  'CardContent' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\app\dashboard\settings\quest\page.tsx
+    4:8    warning  'Link' is defined but never used                                 @typescript-eslint/no-unused-vars
+    9:16   warning  'CardContent' is defined but never used                          @typescript-eslint/no-unused-vars
+  160:173  warning  'e' is defined but never used                                    @typescript-eslint/no-unused-vars
+  202:177  warning  'e' is defined but never used                                    @typescript-eslint/no-unused-vars
+  249:161  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  249:164  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\app\editor\[id]\page.tsx
+  268:44  warning  '_sectionId' is defined but never used  @typescript-eslint/no-unused-vars
+  268:64  warning  '_styles' is defined but never used     @typescript-eslint/no-unused-vars
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\app\signup\page.tsx
+  13:11  warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\components\dashboard\DashboardShell.tsx
+   10:10  warning  'Separator' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   21:5   warning  'DropdownMenuSeparator' is defined but never used                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   34:10  warning  'IconCheck' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  109:11  warning  'pathname' is assigned a value but never used                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  232:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\components\editor\AdvancedEditor.tsx
+   21:10  warning  'Button' is defined but never used         @typescript-eslint/no-unused-vars
+   95:5   warning  'index' is defined but never used          @typescript-eslint/no-unused-vars
+   96:5   warning  'total' is defined but never used          @typescript-eslint/no-unused-vars
+  313:5   warning  'onMoveSection' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\components\editor\Preview.tsx
+  63:70  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  63:83  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\components\editor\SimpleEditor.tsx
+   3:10  warning  'useState' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   3:20  warning  'useCallback' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   6:10  warning  'Button' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  45:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\components\providers\AuthProvider.tsx
+   33:38  error    A `require()` style import is forbidden                                                         @typescript-eslint/no-require-imports
+  102:9   warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+C:\Users\h1r0k\.gemini\antigravity\scratch\lp-builder\src\middleware.ts
+  24:58  warning  'options' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 41 problems (5 errors, 36 warnings)
+  0 errors and 5 warnings potentially fixable with the `--fix` option.
+

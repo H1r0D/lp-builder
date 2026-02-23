@@ -60,13 +60,13 @@ function TestimonialsPreview({ data, isSelected }: { data: TestimonialsData; isS
                 <div className="grid md:grid-cols-2 gap-6">
                     {data.items.map((item, i) => (
                         <div key={i} className="bg-gray-700 p-6 rounded-xl">
-                            <p className="text-gray-300 italic mb-4">"{item.quote}"</p>
+                            <p className="text-gray-300 italic mb-4">&quot;{item.quote}&quot;</p>
                             <p className="text-blue-400 font-medium">— {item.name}</p>
                         </div>
                     ))}
                 </div>
             </div>
-        </section>
+        </section >
     );
 }
 
@@ -116,7 +116,7 @@ export default function Preview({ sections, selectedId, viewMode, onSelect }: Pr
     return (
         <div className="h-full overflow-hidden bg-gray-200 flex justify-center">
             <div
-                className={`h-full overflow-y-auto transition-all duration-300 bg-white ${viewMode === 'sp' ? 'w-[375px]' : 'w-full max-w-none'
+                className={`h-full overflow-y-auto scrollbar-hide transition-all duration-300 bg-white ${viewMode === 'sp' ? 'w-[375px]' : 'w-full max-w-none'
                     }`}
                 style={viewMode === 'sp' ? {
                     boxShadow: '0 0 40px rgba(0,0,0,0.2)',

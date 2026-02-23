@@ -41,7 +41,8 @@ const PLANS = [
     {
         key: 'free' as const,
         name: 'Free',
-        price: '¥0',
+        prices: { monthly: '¥0', annual: '¥0' },
+        annualTotal: null,
         period: '',
         description: 'まずはお試し',
         features: [
@@ -57,7 +58,8 @@ const PLANS = [
     {
         key: 'starter' as const,
         name: 'Starter',
-        price: '¥2,980',
+        prices: { monthly: '¥2,980', annual: '¥2,480' },
+        annualTotal: '¥29,760', // 2480 * 12
         period: '/ 月',
         description: '本格運用に最適',
         features: [
@@ -73,7 +75,8 @@ const PLANS = [
     {
         key: 'pro' as const,
         name: 'Pro',
-        price: '¥9,800',
+        prices: { monthly: '¥9,800', annual: '¥7,980' },
+        annualTotal: '¥95,760', // 7980 * 12
         period: '/ 月',
         description: 'すべてが無制限',
         features: [
@@ -99,6 +102,7 @@ interface UpgradeModalProps {
 export function UpgradeModal({ open, onOpenChange, featureName }: UpgradeModalProps) {
     const { user, profile } = useAuth();
     const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+    const [billingCycle, setBillingCycle] = useState<'annual' | 'monthly'>('annual');
     const currentPlan = profile?.subscription_plan || 'free';
 
     const handleUpgrade = async (planKey: 'starter' | 'pro') => {
@@ -135,7 +139,7 @@ export function UpgradeModal({ open, onOpenChange, featureName }: UpgradeModalPr
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl p-0 overflow-hidden bg-white">
+            <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden bg-white">
                 <DialogHeader className="px-6 pt-5 pb-3 bg-gradient-to-b from-[#1E3A5F]/5 to-transparent">
                     <div className="flex items-center gap-2 mb-1">
                         <IconLock className="w-5 h-5 text-amber" />
@@ -151,6 +155,29 @@ export function UpgradeModal({ open, onOpenChange, featureName }: UpgradeModalPr
                 </DialogHeader>
 
                 <div className="px-6 pb-5">
+                    {/* Billing Cycle Toggle */}
+                    <div className="flex justify-center mb-6 mt-2">
+                        <div className="relative flex items-center p-1 bg-secondary rounded-full border border-border/50">
+                            <button
+                                onClick={() => setBillingCycle('annual')}
+                                className={`relative z-10 flex items-center text-sm font-semibold px-6 py-2 rounded-full transition-all ${billingCycle === 'annual' ? 'text-brand shadow-sm bg-white' : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                年額プラン
+                                <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600">
+                                    約16%OFF
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setBillingCycle('monthly')}
+                                className={`relative z-10 flex items-center text-sm font-semibold px-6 py-2 rounded-full transition-all ${billingCycle === 'monthly' ? 'text-brand shadow-sm bg-white' : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                月額プラン
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="flex flex-col gap-3">
                         {PLANS.map((plan) => {
                             const isCurrent = plan.key === currentPlan;
@@ -201,9 +228,26 @@ export function UpgradeModal({ open, onOpenChange, featureName }: UpgradeModalPr
                                     {/* Right Side: Price & CTA */}
                                     <div className="sm:w-56 shrink-0 flex flex-col items-center sm:items-end justify-center sm:text-right border-t sm:border-t-0 sm:border-l border-border pt-3 sm:pt-0 sm:pl-5 mt-2 sm:mt-0">
                                         <div className="mb-3 text-center sm:text-right">
-                                            <span className="text-2xl font-extrabold text-foreground">{plan.price}</span>
-                                            {plan.period && (
-                                                <span className="text-xs text-muted-foreground ml-0.5">{plan.period}</span>
+                                            {plan.key !== 'free' && billingCycle === 'annual' && (
+                                                <div className="text-[11px] text-muted-foreground line-through mb-0.5">
+                                                    {plan.prices.monthly} / 月
+                                                </div>
+                                            )}
+                                            <div>
+                                                <span className="text-2xl font-extrabold text-foreground">{plan.prices[billingCycle]}</span>
+                                                {plan.period && (
+                                                    <span className="text-xs text-muted-foreground ml-0.5">{plan.period}</span>
+                                                )}
+                                            </div>
+                                            {plan.key !== 'free' && billingCycle === 'annual' && plan.annualTotal && (
+                                                <div className="text-[10px] text-brand font-medium mt-1">
+                                                    年額一括お支払い ({plan.annualTotal})
+                                                </div>
+                                            )}
+                                            {plan.key !== 'free' && billingCycle === 'monthly' && (
+                                                <div className="text-[10px] text-muted-foreground mt-1">
+                                                    毎月のお支払い
+                                                </div>
                                             )}
                                         </div>
 

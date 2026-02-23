@@ -294,7 +294,7 @@ export default function SimpleEditor({ sections, onSectionUpdate }: SimpleEditor
     return (
         <div className="flex-1 flex overflow-hidden">
             {/* メインキャンバス（スクロール可能） */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            <div className="flex-1 overflow-y-auto scrollbar-hide p-4 md:p-6">
                 <div className="max-w-xl mx-auto space-y-4">
                     {sections.map((section) => (
                         <div key={section.id} className="relative">

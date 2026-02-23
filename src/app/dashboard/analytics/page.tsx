@@ -135,7 +135,7 @@ export default function AnalyticsPage() {
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     return (
-        <DashboardShell headerTitle="解析ダッシュボード">
+        <DashboardShell>
             {/* ━━━ KPI Cards ━━━ */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {KPI_CARDS.map((card) => (

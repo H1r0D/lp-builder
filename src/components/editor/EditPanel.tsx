@@ -355,7 +355,7 @@ export default function EditPanel({ section, onUpdate, onRename }: EditPanelProp
                 />
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto scrollbar-hide p-4">
                 {section.type === 'hero' && (
                     <HeroEditor data={section.data as HeroData} onUpdate={onUpdate} />
                 )}

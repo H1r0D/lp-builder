@@ -120,7 +120,7 @@ export default function AIChatPanel({ isOpen, onToggle }: AIChatPanelProps) {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+            <div className="flex-1 overflow-y-auto scrollbar-hide p-4 space-y-3 min-h-0">
                 {messages.map((msg) => (
                     <div
                         key={msg.id}
@@ -128,8 +128,8 @@ export default function AIChatPanel({ isOpen, onToggle }: AIChatPanelProps) {
                     >
                         <div
                             className={`max-w-[85%] px-3 py-2 rounded-md text-xs leading-relaxed ${msg.role === 'user'
-                                    ? 'bg-brand text-white'
-                                    : 'bg-secondary text-foreground'
+                                ? 'bg-brand text-white'
+                                : 'bg-secondary text-foreground'
                                 }`}
                         >
                             {msg.content}

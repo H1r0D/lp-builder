@@ -1,29 +1,60 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/components/providers/AuthProvider';
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { DashboardShell } from '@/components/dashboard/DashboardShell';
+import type { Project } from '@/types/database';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Textarea } from '@/components/ui/textarea';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import type { Project } from '@/types/database';
 
 /* ─── Icons ─── */
+function IconAlertCircle({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+    );
+}
+
+function IconMoreVertical({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+        </svg>
+    );
+}
+
+function IconCheckCircle({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+    );
+}
+
+function IconLock({ className }: { className?: string }) {
+    return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+        </svg>
+    );
+}
 function IconFolder({ className }: { className?: string }) {
     return (
         <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -32,368 +63,300 @@ function IconFolder({ className }: { className?: string }) {
     );
 }
 
-function IconChart({ className }: { className?: string }) {
+function IconEye({ className }: { className?: string }) {
     return (
         <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
     );
 }
 
-function IconSettings({ className }: { className?: string }) {
+function IconFileText({ className }: { className?: string }) {
     return (
         <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
         </svg>
     );
 }
 
 function IconPlus({ className }: { className?: string }) {
     return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
     );
 }
 
-function IconGift({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
-        </svg>
-    );
-}
-
-function IconLogout({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
-        </svg>
-    );
-}
-
-/* ─── Sidebar Nav Items ─── */
-const NAV_ITEMS = [
-    { icon: IconFolder, label: 'プロジェクト', href: '/dashboard', active: true },
-    { icon: IconChart, label: '解析', href: '/dashboard/analytics', active: false },
-    { icon: IconSettings, label: '設定', href: '#', active: false },
+const MOCK_PROJECTS: Project[] = [
+    {
+        id: 'mock-1',
+        title: '春の新作キャンペーンLP',
+        status: 'published',
+        user_id: 'user-1',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        json_content: {},
+        slug: null,
+        thumbnail_url: null,
+    },
+    {
+        id: 'mock-2',
+        title: '無題のLP',
+        status: 'draft',
+        user_id: 'user-1',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        updated_at: new Date(Date.now() - 86400000).toISOString(),
+        json_content: {},
+        slug: null,
+        thumbnail_url: null,
+    },
 ];
-
-/* ─── Plan Labels ─── */
-const PLAN_LABELS: Record<string, { label: string; color: string }> = {
-    free: { label: 'Free', color: 'bg-secondary text-muted-foreground' },
-    starter: { label: 'Starter', color: 'bg-brand/10 text-brand' },
-    pro: { label: 'Pro', color: 'bg-amber/10 text-amber' },
-};
 
 export default function DashboardPage() {
     const router = useRouter();
-    const { user, profile, isLoading: authLoading, signOut } = useAuth();
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
-    // プロジェクト一覧を取得
-    const fetchProjects = useCallback(async () => {
-        if (!user) return;
-        const supabase = createClient();
-        const { data, error } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('updated_at', { ascending: false });
-
-        if (!error && data) {
-            setProjects(data as Project[]);
-        }
-        setIsLoadingProjects(false);
-    }, [user]);
-
+    // Mock Fetch
     useEffect(() => {
-        if (!authLoading && user) {
-            fetchProjects();
-        } else if (!authLoading && !user) {
+        const fetchProjects = async () => {
+            setIsLoadingProjects(true);
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 600));
+            setProjects(MOCK_PROJECTS);
             setIsLoadingProjects(false);
-        }
-    }, [authLoading, user, fetchProjects]);
+        };
+        fetchProjects();
+    }, []);
 
-    // 新規 LP 作成
+    // 新規 LP 作成 (Mock)
     const handleCreateNew = async () => {
-        if (!user) {
-            // ローカル環境向けフォールバック
-            router.push(`/editor/local-draft-${Date.now()}`);
-            return;
-        }
-
-        try {
-            const supabase = createClient();
-            const { data, error } = await supabase
-                .from('projects')
-                .insert({
-                    user_id: user.id,
-                    title: '無題のLP',
-                    json_content: {
-                        sections: [
-                            {
-                                id: `sec_${Date.now()}_1`,
-                                type: 'hero',
-                                name: 'ヒーロー',
-                                data: { heading: '新しいランディングページ', subheading: 'サブテキストを入力', ctaText: 'お問い合わせ', ctaLink: '#' },
-                                visible: true,
-                            },
-                        ],
-                    } as Record<string, unknown>,
-                    status: 'draft' as const,
-                })
-                .select()
-                .single();
-
-            if (error) {
-                console.error('Failed to create project in Supabase:', error);
-                // 環境変数が無い等のエラー時はローカル用に進める
-                router.push(`/editor/local-draft-${Date.now()}`);
-                return;
-            }
-
-            if (data) {
-                const project = data as Project;
-                router.push(`/editor/${project.id}`);
-            }
-        } catch (err) {
-            console.error('Exception creating project:', err);
-            router.push(`/editor/local-draft-${Date.now()}`);
-        }
+        const newProject: Project = {
+            id: `mock-${Date.now()}`,
+            title: '無題のLP',
+            status: 'draft',
+            user_id: 'user-1',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            json_content: {},
+            slug: null,
+            thumbnail_url: null,
+        };
+        setProjects(prev => [newProject, ...prev]);
+        router.push(`/editor/${newProject.id}`);
     };
 
-    // LP 削除
+    // プロジェクト削除 (Mock)
     const handleDelete = async (id: string) => {
-        if (!confirm('このLPを削除しますか？')) return;
-        const supabase = createClient();
-        await supabase.from('projects').delete().eq('id', id);
+        if (!confirm('本当に削除しますか？')) return;
         setProjects((prev) => prev.filter((p) => p.id !== id));
     };
 
-    // ログアウト
-    const handleLogout = async () => {
-        await signOut();
-        router.push('/login');
-        router.refresh();
-    };
-
     // ローディング
-    if (authLoading) {
-        return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <div className="animate-spin h-8 w-8 border-4 border-brand border-t-transparent rounded-full" />
-            </div>
-        );
-    }
+    // if (authLoading) { // authLoading is not defined in this context, removed.
+    //     return (
+    //         <div className="min-h-screen bg-white flex items-center justify-center">
+    //             <div className="animate-spin h-8 w-8 border-4 border-brand border-t-transparent rounded-full" />
+    //         </div>
+    //     );
+    // }
 
-    const plan = PLAN_LABELS[profile?.subscription_plan || 'free'];
     const published = projects.filter((p) => p.status === 'published').length;
     const drafts = projects.filter((p) => p.status === 'draft').length;
 
     return (
-        <div className="h-screen flex bg-[#f8fafc]">
-            {/* ━━━ Left Sidebar ━━━ */}
-            <aside className="w-56 bg-white border-r border-border flex flex-col shrink-0">
-                {/* Logo */}
-                <div className="h-12 flex items-center px-4 border-b border-border gap-2">
-                    <div className="w-6 h-6 bg-brand rounded flex items-center justify-center">
-                        <span className="text-white text-[8px] font-bold">LP</span>
+        <DashboardShell>
+            <div className="max-w-5xl mx-auto w-full space-y-8 pb-12">
+                {/* 1. Important Notice */}
+                <Alert className="bg-red-50/80 border-red-200 text-red-800 shadow-sm rounded-xl">
+                    <IconAlertCircle className="h-5 w-5 stroke-red-600 mt-0.5" />
+                    <AlertTitle className="text-sm font-bold tracking-tight text-red-700">【重要なお知らせ】</AlertTitle>
+                    <AlertDescription className="text-xs font-medium text-red-600 mt-1">
+                        2026年3月1日より、一部テンプレートの名称とカテゴリが変更になります。作成済みのLPへの影響はありませんが、詳細はこちらのお知らせをご確認ください。
+                    </AlertDescription>
+                </Alert>
+
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-lg font-bold text-slate-800 tracking-tight">プロジェクト一覧</h2>
+                        <p className="text-[13px] font-medium text-slate-500 mt-1">管理中のランディングページ（{projects.length}件）</p>
                     </div>
-                    <span className="text-sm font-semibold text-foreground">AI LPO Builder</span>
+                    <Button
+                        size="sm"
+                        onClick={handleCreateNew}
+                        className="bg-brand hover:bg-brand/90 text-white shadow-sm shadow-brand/20 h-9 px-5 rounded-lg text-[13px] font-bold transition-all active:scale-95"
+                    >
+                        <IconPlus className="w-4 h-4 mr-1.5" />
+                        新規ページ作成
+                    </Button>
                 </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 p-3 space-y-1">
-                    {NAV_ITEMS.map((item) => (
-                        <Link
-                            key={item.label}
-                            href={item.href}
-                            className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${item.active
-                                ? 'bg-brand/8 text-brand font-medium'
-                                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                                }`}
-                        >
-                            <item.icon className="w-4 h-4" />
-                            {item.label}
-                        </Link>
-                    ))}
-                </nav>
-
-                {/* Referral Card */}
-                {profile && (
-                    <div className="mx-3 mb-3 p-3 bg-amber/5 border border-amber/20 rounded-md">
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <IconGift className="w-3.5 h-3.5 text-amber" />
-                            <span className="text-[11px] font-semibold text-amber">友達紹介</span>
+                {isLoadingProjects ? (
+                    <div className="flex justify-center py-20">
+                        <div className="animate-spin h-8 w-8 border-4 border-brand border-t-transparent rounded-full shadow-sm" />
+                    </div>
+                ) : projects.length === 0 ? (
+                    <div className="text-center py-24 bg-white border border-slate-200 border-dashed rounded-2xl">
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                            <IconFolder className="w-7 h-7 text-slate-400" />
                         </div>
-                        <p className="text-[10px] text-muted-foreground mb-2">
-                            コードを共有して双方に +3 クレジット
+                        <h3 className="text-[15px] font-bold text-slate-700 mb-1">まだプロジェクトがありません</h3>
+                        <p className="text-xs font-medium text-slate-500 mb-5">
+                            新規作成ボタンから最初のLPを作りましょう
                         </p>
-                        <div className="bg-white rounded px-2 py-1.5 text-center">
-                            <code className="text-xs font-mono font-bold text-foreground tracking-wider">
-                                {profile.referral_code}
-                            </code>
-                        </div>
+                        <Button
+                            size="sm"
+                            onClick={handleCreateNew}
+                            className="bg-brand hover:bg-brand/90 text-white text-[13px] font-bold shadow-sm shadow-brand/20 px-6 h-9 rounded-lg"
+                        >
+                            <IconPlus className="w-4 h-4 mr-1.5" />
+                            最初のLPを作成
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {projects.map((project) => {
+                            // Dummy completion calculating based on id to simulate realistic data
+                            const nameLength = project.title.length;
+                            const isTitleSet = project.title !== '無題のLP';
+                            const isFaviconSet = nameLength % 2 === 0;
+                            const isAnalyticsSet = nameLength % 3 === 0;
+
+                            const completedTasks = [isTitleSet, isFaviconSet, isAnalyticsSet].filter(Boolean).length;
+                            const progressPercent = Math.round((completedTasks / 3) * 100);
+
+                            return (
+                                <Card key={project.id} className="overflow-hidden bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow rounded-xl">
+                                    <CardContent className="p-0">
+                                        <div className="flex flex-col md:flex-row">
+                                            {/* 2. Thumbnail & Basic Info */}
+                                            <div className="flex-1 p-5 lg:p-6 flex flex-col md:flex-row gap-5 lg:gap-6 border-b md:border-b-0 md:border-r border-slate-100 min-w-0">
+                                                {/* Thumbnail Placeholder */}
+                                                <div className="w-full md:w-48 h-32 shrink-0 bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200/60 relative overflow-hidden group">
+                                                    <div className="absolute inset-0 bg-slate-200/50 flex items-center justify-center pointer-events-none group-hover:bg-transparent transition-colors">
+                                                        <span className="text-[11px] font-bold text-slate-400 tracking-widest uppercase shadow-sm">No Image</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Basic Info */}
+                                                <div className="flex-1 flex flex-col min-w-0 py-1">
+                                                    <div className="flex items-start justify-between gap-4 mb-1">
+                                                        <h3 className="text-lg font-bold text-slate-800 truncate">{project.title}</h3>
+                                                        <Badge
+                                                            className={`shrink-0 h-6 px-3 text-[11px] font-bold tracking-wider rounded-md border-none ${project.status === 'published'
+                                                                ? 'bg-brand text-white shadow-sm shadow-brand/20'
+                                                                : 'bg-slate-100 text-slate-500'
+                                                                }`}
+                                                        >
+                                                            {project.status === 'published' ? '公開中' : '非公開'}
+                                                        </Badge>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 mb-4">
+                                                        <span className="text-[11px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                                            lpo-builder.com/{project.id.slice(0, 8)}
+                                                        </span>
+                                                        <Link href="#" className="hidden sm:inline-block text-[10px] font-bold text-brand hover:underline hover:text-brand/80">独自ドメインを取得しませんか？</Link>
+                                                    </div>
+
+                                                    {/* 4. Quest-style Basic Settings */}
+                                                    <div
+                                                        onClick={() => router.push('/dashboard/settings/quest')}
+                                                        className="mt-auto bg-slate-50/80 hover:bg-slate-100/80 cursor-pointer rounded-lg p-3.5 border border-slate-100 hover:border-slate-200 mb-3 transition-colors group"
+                                                    >
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[11px] font-bold text-slate-700 tracking-wide">公開に必要な基本設定</span>
+                                                                {progressPercent === 100 ? (
+                                                                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-1.5 rounded">Complete!</span>
+                                                                ) : (
+                                                                    <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-1.5 rounded">{progressPercent}%</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="text-[10px] font-bold text-brand group-hover:underline flex items-center gap-0.5">
+                                                                詳細 <span className="text-xs leading-none">→</span>
+                                                            </div>
+                                                        </div>
+                                                        <Progress value={progressPercent} className="h-1.5 bg-slate-200" indicatorClassName={progressPercent === 100 ? "bg-emerald-500" : "bg-amber-500"} />
+                                                    </div>
+
+                                                    {/* Memo Field */}
+                                                    <div className="relative">
+                                                        <div className="absolute top-2.5 left-2.5">
+                                                            <IconFileText className="w-4 h-4 text-slate-400" />
+                                                        </div>
+                                                        <Textarea
+                                                            placeholder="プロジェクトのメモや備忘録を入力..."
+                                                            className="min-h-[60px] resize-none pb-2 pt-2.5 pl-8 pr-3 text-[11px] bg-white border-slate-200/80 focus-visible:ring-1 focus-visible:ring-brand/30 placeholder:text-slate-300"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* 3. Action Buttons */}
+                                            <div className="w-full md:w-[220px] bg-slate-50 border-l border-slate-100 p-5 lg:p-6 flex flex-col justify-center gap-2.5 shrink-0">
+                                                <Button
+                                                    onClick={() => router.push(`/editor/${project.id}`)}
+                                                    className="w-full h-10 bg-brand hover:bg-brand/90 text-white shadow-sm shadow-brand/20 font-bold text-xs rounded-lg border border-brand-400/30 justify-start px-4 cursor-pointer"
+                                                >
+                                                    <svg className="w-4 h-4 mr-3 text-white/90" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                                                    </svg>
+                                                    ページ編集
+                                                </Button>
+
+                                                <Button variant="outline" className="w-full h-10 border-slate-200 text-slate-600 font-bold text-xs hover:bg-white hover:text-slate-900 rounded-lg justify-start px-4 shadow-sm cursor-pointer">
+                                                    <IconEye className="w-4 h-4 mr-3 text-slate-400" />
+                                                    プレビュー
+                                                </Button>
+
+                                                <Button variant="outline" className="w-full h-10 border-slate-200 text-slate-600 font-bold text-xs hover:bg-white hover:text-slate-900 rounded-lg justify-start px-4 shadow-sm group cursor-pointer">
+                                                    <IconLock className="w-4 h-4 mr-3 text-amber-500" />
+                                                    <span className="flex-1 text-left">アクセス解析</span>
+                                                    <div className="flex items-center">
+                                                        <Badge variant="secondary" className="h-4 px-1 text-[9px] bg-amber-100 text-amber-700 border-none font-bold rounded shrink-0">PRO</Badge>
+                                                    </div>
+                                                </Button>
+
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="w-full h-10 text-slate-500 hover:text-slate-800 hover:bg-slate-100 font-bold text-xs rounded-lg justify-start px-4 cursor-pointer">
+                                                            <IconMoreVertical className="w-4 h-4 mr-3 text-slate-400" />
+                                                            <span className="flex-1 text-left">その他のメニュー</span>
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="w-48 p-1 rounded-xl shadow-lg border-slate-200">
+                                                        <DropdownMenuItem className="text-xs font-bold text-slate-600 py-2.5 px-3 rounded-lg focus:bg-slate-100 cursor-pointer">
+                                                            公開設定
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem className="text-xs font-bold text-slate-600 py-2.5 px-3 rounded-lg focus:bg-slate-100 cursor-pointer">
+                                                            複製して新しく作る
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem className="text-xs font-bold text-slate-600 py-2.5 px-3 rounded-lg focus:bg-slate-100 cursor-pointer">
+                                                            グループ編集
+                                                        </DropdownMenuItem>
+                                                        <div className="h-px bg-slate-100 my-1 mx-2" />
+                                                        <DropdownMenuItem
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                handleDelete(project.id);
+                                                            }}
+                                                            className="text-xs font-bold text-red-600 py-2.5 px-3 rounded-lg focus:bg-red-50 focus:text-red-700 cursor-pointer"
+                                                        >
+                                                            削除する
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
                     </div>
                 )}
-
-                {/* Plan Badge */}
-                <div className="px-4 py-3 border-t border-border">
-                    <Badge className={`text-[10px] ${plan.color}`}>{plan.label} プラン</Badge>
-                    {profile && (
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                            クレジット残: {profile.credits}
-                        </p>
-                    )}
-                </div>
-            </aside>
-
-            {/* ━━━ Main ━━━ */}
-            <div className="flex-1 flex flex-col min-w-0">
-                {/* Header */}
-                <header className="h-12 bg-white border-b border-border flex items-center px-6 gap-4 shrink-0">
-                    <h1 className="text-sm font-semibold text-foreground flex-1">プロジェクト</h1>
-
-                    {/* New LP Button */}
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                size="sm"
-                                onClick={handleCreateNew}
-                                className="bg-amber hover:bg-amber/90 text-white h-8 text-xs px-3"
-                            >
-                                <IconPlus className="w-3.5 h-3.5 mr-1" />
-                                新規作成
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>新しいLPを作成</TooltipContent>
-                    </Tooltip>
-
-                    <Separator orientation="vertical" className="h-5" />
-
-                    {/* User Menu */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger className="outline-none">
-                            <Avatar className="w-7 h-7 cursor-pointer">
-                                <AvatarFallback className="bg-brand/10 text-brand text-[10px] font-semibold">
-                                    {(user?.email || 'U')[0].toUpperCase()}
-                                </AvatarFallback>
-                            </Avatar>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                            <div className="px-2 py-1.5">
-                                <p className="text-xs font-medium text-foreground truncate">{user?.email}</p>
-                                <p className="text-[10px] text-muted-foreground">{plan.label} プラン</p>
-                            </div>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-xs">
-                                <IconSettings className="w-3.5 h-3.5 mr-2" />
-                                設定
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-xs text-red-600" onClick={handleLogout}>
-                                <IconLogout className="w-3.5 h-3.5 mr-2" />
-                                ログアウト
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </header>
-
-                {/* Content */}
-                <main className="flex-1 overflow-y-auto p-6">
-                    {/* Stats */}
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                        {[
-                            { label: '合計', value: projects.length, color: 'text-foreground' },
-                            { label: '公開中', value: published, color: 'text-emerald-600' },
-                            { label: '下書き', value: drafts, color: 'text-muted-foreground' },
-                        ].map((stat) => (
-                            <div key={stat.label} className="bg-white border border-border rounded-md p-4">
-                                <p className="text-[11px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
-                                <p className={`text-2xl font-bold ${stat.color} mt-1`}>{stat.value}</p>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* LP Cards */}
-                    {isLoadingProjects ? (
-                        <div className="flex justify-center py-12">
-                            <div className="animate-spin h-6 w-6 border-3 border-brand border-t-transparent rounded-full" />
-                        </div>
-                    ) : projects.length === 0 ? (
-                        <div className="text-center py-16">
-                            <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
-                                <IconFolder className="w-7 h-7 text-muted-foreground" />
-                            </div>
-                            <h3 className="text-sm font-medium text-foreground mb-1">まだプロジェクトがありません</h3>
-                            <p className="text-xs text-muted-foreground mb-4">
-                                新規作成ボタンから最初のLPを作りましょう
-                            </p>
-                            <Button
-                                size="sm"
-                                onClick={handleCreateNew}
-                                className="bg-brand hover:bg-brand/90 text-white text-xs"
-                            >
-                                <IconPlus className="w-3.5 h-3.5 mr-1" />
-                                最初のLPを作成
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {projects.map((project) => (
-                                <div
-                                    key={project.id}
-                                    className="group bg-white border border-border rounded-md hover:border-brand/30 hover:shadow-sm transition-all"
-                                >
-                                    {/* サムネイル */}
-                                    <div className="h-32 bg-gradient-to-br from-brand/5 to-brand/10 rounded-t-md flex items-center justify-center">
-                                        <span className="text-2xl font-bold text-brand/20">LP</span>
-                                    </div>
-
-                                    {/* Info */}
-                                    <div className="p-4">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="min-w-0 flex-1">
-                                                <h3 className="text-sm font-medium text-foreground truncate">{project.title}</h3>
-                                                <p className="text-[10px] text-muted-foreground mt-0.5">
-                                                    更新: {new Date(project.updated_at).toLocaleDateString('ja-JP')}
-                                                </p>
-                                            </div>
-                                            <Badge
-                                                className={`text-[10px] shrink-0 ${project.status === 'published'
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                    : 'bg-secondary text-muted-foreground'
-                                                    }`}
-                                            >
-                                                {project.status === 'published' ? '公開中' : '下書き'}
-                                            </Badge>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 mt-3">
-                                            <Link href={`/editor/${project.id}`} className="flex-1">
-                                                <Button size="sm" variant="outline" className="w-full h-7 text-xs border-border">
-                                                    編集
-                                                </Button>
-                                            </Link>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="h-7 text-xs border-border text-red-500 hover:text-red-600 hover:bg-red-50"
-                                                onClick={() => handleDelete(project.id)}
-                                            >
-                                                削除
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </main>
             </div>
-        </div>
+        </DashboardShell>
     );
 }

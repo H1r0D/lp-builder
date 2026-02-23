@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Profile, Database } from '@/types/database';
+import { createClient } from '@/lib/supabase/client';
 
 interface AuthContextType {
     user: User | null;
@@ -30,7 +31,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // クライアントを遅延初期化（SSR/SSG時には実行しない）
     const getSupabase = () => {
         if (!supabaseRef.current) {
-            const { createClient } = require('@/lib/supabase/client');
             supabaseRef.current = createClient();
         }
         return supabaseRef.current!;

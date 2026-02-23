@@ -57,7 +57,7 @@ export default function SectionList({
                 </h2>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-2">
+            <div className="flex-1 overflow-y-auto scrollbar-hide p-2 space-y-2">
                 {sections.map((section, index) => {
                     const isSelected = section.id === selectedId;
                     const isEditing = editingId === section.id;
@@ -66,8 +66,8 @@ export default function SectionList({
                         <div
                             key={section.id}
                             className={`group relative p-3 rounded-lg cursor-pointer transition-all ${isSelected
-                                    ? 'bg-blue-100 border border-blue-400'
-                                    : 'bg-white hover:bg-gray-100 border border-gray-200'
+                                ? 'bg-blue-100 border border-blue-400'
+                                : 'bg-white hover:bg-gray-100 border border-gray-200'
                                 } ${!section.visible ? 'opacity-50' : ''}`}
                             onClick={() => onSelect(section.id)}
                         >

@@ -197,7 +197,7 @@ function PropertyPanel({
     }
 
     return (
-        <div className="h-full overflow-y-auto">
+        <div className="h-full overflow-y-auto scrollbar-hide">
             {/* コンテンツ編集 */}
             <div className="border-b border-border">
                 <EditPanel section={section} onUpdate={onUpdate} onRename={onRename} />
@@ -391,7 +391,7 @@ export default function AdvancedEditor({
                 <Separator />
 
                 {/* セクション一覧（D&D可能） */}
-                <div className="flex-1 overflow-y-auto p-2">
+                <div className="flex-1 overflow-y-auto scrollbar-hide p-2">
                     <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 mb-2">
                         セクション一覧
                     </h3>
