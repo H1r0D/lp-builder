@@ -1,447 +1,525 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { SettingsModal } from '@/components/editor/SettingsModal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
     Tooltip,
     TooltipContent,
+    TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { generateSectionId } from '@/lib/storage';
-import { useAuth } from '@/components/providers/AuthProvider';
-import { createClient } from '@/lib/supabase/client';
-import SimpleEditor from '@/components/editor/SimpleEditor';
-import AdvancedEditor from '@/components/editor/AdvancedEditor';
-import AIChatPanel from '@/components/editor/AIChatPanel';
-import type { Section, SectionType, HeroData, FeaturesData, TestimonialsData, FAQData, FooterData } from '@/types/lp';
-import type { Project } from '@/types/database';
-import type { SectionStyles } from '@/components/editor/AdvancedEditor';
-import { UpgradeModal } from '@/components/paywall/UpgradeModal';
+import {
+    ArrowLeft,
+    Save,
+    Globe,
+    Settings,
+    Eye,
+    Monitor,
+    Tablet,
+    Smartphone,
+    MapPin,
+    SquareDashed,
+    PenTool,
+    Lock,
+    Send,
+    Bot,
+    User,
+    CheckCircle2,
+    Palette,
+    Type,
+    ShoppingCart,
+    HelpCircle
+} from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
-/* ─── アイコン ─── */
-function IconPC({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25Z" />
-        </svg>
-    );
-}
-
-function IconSP({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-        </svg>
-    );
-}
-
-function IconArrowLeft({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-        </svg>
-    );
-}
-
-function IconDownload({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-        </svg>
-    );
-}
-
-function IconCheck({ className }: { className?: string }) {
-    return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-        </svg>
-    );
-}
-
-/* ─── 新規セクションのデフォルトデータ ─── */
-function getDefaultSectionData(type: SectionType): Section['data'] {
-    switch (type) {
-        case 'hero':
-            return { heading: '新しいヒーローセクション', subheading: 'サブテキスト', ctaText: 'お問い合わせ', ctaLink: '#' } as HeroData;
-        case 'features':
-            return { items: [{ title: '特徴 1', body: '説明テキスト', iconImage: '' }] } as FeaturesData;
-        case 'testimonials':
-            return { items: [{ name: 'お客様名', quote: 'お客様の声を入力' }] } as TestimonialsData;
-        case 'faq':
-            return { items: [{ q: '質問を入力', a: '回答を入力' }] } as FAQData;
-        case 'footer':
-            return { companyName: '会社名', links: [{ label: 'リンク', url: '#' }] } as FooterData;
-        default:
-            return {} as Section['data'];
-    }
-}
-
-const TYPE_LABELS: Record<string, string> = {
-    hero: 'ヒーロー',
-    features: '特徴',
-    testimonials: 'お客様の声',
-    faq: 'FAQ',
-    footer: 'フッター',
-};
-
-/* ─── メインコンポーネント ─── */
-export default function EditorPage() {
+export default function AdvancedEditorPage() {
     const router = useRouter();
-    const params = useParams();
-    const lpId = params.id as string;
-    const { user, profile, isLoading: authLoading } = useAuth();
+    const [rightMode, setRightMode] = useState<'chat' | 'code'>('chat');
+    const [viewMode, setViewMode] = useState<'pc' | 'tablet' | 'sp'>('pc');
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-    const [project, setProject] = useState<Project | null>(null);
-    const [sections, setSections] = useState<Section[]>([]);
-    const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'pc' | 'sp'>('pc');
-    const [editorMode, setEditorMode] = useState<'simple' | 'advanced'>('simple');
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState('');
-    const [aiPanelOpen, setAiPanelOpen] = useState(true);
-    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-    const [upgradeFeature, setUpgradeFeature] = useState('');
+    const [isPublishPopoverOpen, setIsPublishPopoverOpen] = useState(false);
+    const [chatInput, setChatInput] = useState('');
 
-    useEffect(() => {
-        if (authLoading) return;
+    // UI Refinements State
+    const [activeAiTool, setActiveAiTool] = useState<'pin' | 'area' | 'pen' | null>(null);
+    const [isBrandLocked, setIsBrandLocked] = useState(false);
+    const [brandColor, setBrandColor] = useState('#3B82F6');
+    const [brandFont, setBrandFont] = useState('font-sans');
 
-        // ローカルダミーIDかどうかチェック
-        const isLocalDraft = lpId.startsWith('local-draft-');
-
-        // 通常のプロジェクトアクセスで、ユーザーがいない場合はログインへ
-        if (!user && !isLocalDraft) {
-            router.push('/login');
-            return;
-        }
-
-        const fetchProject = async () => {
-            // ローカルダミーIDの処理
-            if (lpId.startsWith('local-draft-')) {
-                const mockProject: Project = {
-                    id: lpId,
-                    user_id: user?.id || 'dummy_user',
-                    title: '無題のLP（ローカル保存）',
-                    json_content: {},
-                    status: 'draft',
-                    slug: null,
-                    thumbnail_url: null,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                };
-                setProject(mockProject);
-
-                const defaultSection: Section = {
-                    id: `sec_${Date.now()}_1`,
-                    type: 'hero',
-                    name: 'ヒーロー',
-                    data: { heading: '新しいランディングページ', subheading: 'サブテキストを入力', ctaText: 'お問い合わせ', ctaLink: '#' },
-                    visible: true,
-                };
-                setSections([defaultSection]);
-                setSelectedSectionId(defaultSection.id);
-                return;
-            }
-
-            try {
-                const supabase = createClient();
-                const { data, error } = await supabase
-                    .from('projects')
-                    .select('*')
-                    .eq('id', lpId)
-                    .single();
-
-                if (error || !data) {
-                    router.push('/dashboard');
-                    return;
-                }
-
-                const projectData = data as Project;
-                setProject(projectData);
-                const content = projectData.json_content as { sections?: Section[] };
-                const loadedSections = content?.sections || [];
-                setSections(loadedSections);
-                if (loadedSections.length > 0) {
-                    setSelectedSectionId(loadedSections[0].id);
-                }
-            } catch (err) {
-                console.error('Failed to fetch project:', err);
-                router.push('/dashboard');
-            }
-        };
-
-        fetchProject();
-    }, [lpId, router, user, authLoading]);
-
-    /* ── Save ── */
-    const handleSave = useCallback(async () => {
-        if (!project) return;
+    const handleSave = () => {
         setIsSaving(true);
-
-        const supabase = createClient();
-        const { error } = await supabase
-            .from('projects')
-            .update({
-                json_content: { sections } as unknown as Record<string, unknown>,
-                title: project.title,
-            })
-            .eq('id', project.id);
-
-        if (error) {
-            setSaveMessage('保存に失敗しました');
-        } else {
+        setTimeout(() => {
+            setIsSaving(false);
             setSaveMessage('保存しました');
-        }
-        setTimeout(() => setSaveMessage(''), 2000);
-        setIsSaving(false);
-    }, [project, sections]);
+            setTimeout(() => setSaveMessage(''), 3000);
+        }, 800);
+    };
 
-    /* ── Section Update ── */
-    const handleSectionUpdate = useCallback((sectionId: string, data: Section['data']) => {
-        setSections((prev) =>
-            prev.map((s) =>
-                s.id === sectionId ? { ...s, data } : s
-            )
-        );
-    }, []);
+    const handlePublish = () => {
+        setIsPublishPopoverOpen(false);
+        // Add publish logic here
+    };
 
-    /* ── Section Add ── */
-    const handleSectionAdd = useCallback((type: SectionType) => {
-        const newSection: Section = {
-            id: generateSectionId(),
-            type,
-            name: TYPE_LABELS[type] || type,
-            data: getDefaultSectionData(type),
-            visible: true,
-        };
-        setSections((prev) => [...prev, newSection]);
-    }, []);
-
-    /* ── Section Delete ── */
-    const handleSectionDelete = useCallback((id: string) => {
-        if (!confirm('このセクションを削除しますか？')) return;
-        setSections((prev) => prev.filter((s) => s.id !== id));
-        setSelectedSectionId((prev) => (prev === id ? null : prev));
-    }, []);
-
-    /* ── Section Reorder (DnD) ── */
-    const handleSectionsReorder = useCallback((newSections: Section[]) => {
-        setSections(newSections);
-    }, []);
-
-    /* ── Move Section ── */
-    const handleMoveSection = useCallback((id: string, direction: 'up' | 'down') => {
-        setSections((prev) => {
-            const index = prev.findIndex((s) => s.id === id);
-            if (index < 0) return prev;
-            const newIndex = direction === 'up' ? index - 1 : index + 1;
-            if (newIndex < 0 || newIndex >= prev.length) return prev;
-            const newSections = [...prev];
-            [newSections[index], newSections[newIndex]] = [newSections[newIndex], newSections[index]];
-            return newSections;
-        });
-    }, []);
-
-    /* ── Toggle Visibility ── */
-    const handleToggleVisibility = useCallback((id: string) => {
-        setSections((prev) =>
-            prev.map((s) =>
-                s.id === id ? { ...s, visible: !s.visible } : s
-            )
-        );
-    }, []);
-
-    /* ── Rename Section ── */
-    const handleRenameSection = useCallback((id: string, name: string) => {
-        setSections((prev) =>
-            prev.map((s) =>
-                s.id === id ? { ...s, name } : s
-            )
-        );
-    }, []);
-
-    /* ── Style Update (dummy) ── */
-    const handleStyleUpdate = useCallback((_sectionId: string, _styles: SectionStyles) => {
-        // 将来的に JSON に保存する
-    }, []);
-
-    /* ── Export ── */
-    const handleExport = async () => {
-        if (!project) return;
-        // Paywall チェック: Free ユーザーはZIPエクスポート不可
-        const plan = profile?.subscription_plan || 'free';
-        if (plan === 'free') {
-            setUpgradeFeature('ZIPエクスポート');
-            setShowUpgradeModal(true);
-            return;
-        }
-        try {
-            const response = await fetch('/api/export', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lp: { ...project, sections } }),
-            });
-            if (!response.ok) throw new Error('Export failed');
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${project.title.replace(/[^a-zA-Z0-9]/g, '_')}.zip`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        } catch {
-            alert('エクスポートに失敗しました');
+    // Calculate canvas width based on view mode
+    const getCanvasWidth = () => {
+        switch (viewMode) {
+            case 'pc': return 'w-full max-w-[1200px]';
+            case 'tablet': return 'w-[768px]';
+            case 'sp': return 'w-[375px]';
+            default: return 'w-full';
         }
     };
 
-    /* ── Loading ── */
-    if (!project) {
-        return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <div className="animate-spin h-8 w-8 border-4 border-brand border-t-transparent rounded-full" />
-            </div>
-        );
-    }
-
     return (
-        <div className="h-screen flex flex-col bg-[#f8fafc]">
-            {/* ━━━━━━ Header ━━━━━━ */}
-            <header className="h-12 bg-white border-b border-border flex items-center px-4 gap-3 flex-shrink-0">
-                {/* 戻る + ロゴ */}
-                <Tooltip>
-                    <TooltipTrigger asChild>
+        <TooltipProvider delayDuration={200}>
+            <div className="h-screen w-full flex flex-col bg-[#f8fafc] overflow-hidden font-sans">
+                {/* ━━━ Top Navbar ━━━ */}
+                <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 shrink-0 shadow-sm z-10 relative">
+                    {/* Left: Project Info */}
+                    <div className="flex items-center gap-4 w-1/3">
                         <Link
                             href="/dashboard"
-                            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors text-sm font-bold bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg"
                         >
-                            <IconArrowLeft className="w-4 h-4" />
-                            <div className="w-5 h-5 bg-brand rounded flex items-center justify-center">
-                                <span className="text-white text-[8px] font-bold">LP</span>
-                            </div>
+                            <ArrowLeft className="w-4 h-4" />
+                            ダッシュボードへ戻る
                         </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>ダッシュボードに戻る</TooltipContent>
-                </Tooltip>
+                        <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <h1 className="text-sm font-black text-slate-800 truncate">LP Builder Project</h1>
+                            <Badge variant="secondary" className="text-[10px] font-bold bg-slate-100 text-slate-500">Draft</Badge>
+                        </div>
+                    </div>
 
-                {/* タイトル */}
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <h1 className="text-sm font-medium text-foreground truncate">{project.title}</h1>
-                    <Badge variant="secondary" className="text-[10px] shrink-0">
-                        {sections.length} セクション
-                    </Badge>
-                </div>
-
-                {/* ── Center: モード切替トグル ── */}
-                <div className="absolute left-1/2 -translate-x-1/2">
-                    <Tabs value={editorMode} onValueChange={(v) => setEditorMode(v as 'simple' | 'advanced')}>
-                        <TabsList className="bg-secondary h-8">
-                            <TabsTrigger
-                                value="simple"
-                                className="text-[12px] h-6 px-3 data-[state=active]:bg-brand data-[state=active]:text-white"
-                            >
-                                かんたん
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value="advanced"
-                                className="text-[12px] h-6 px-3 data-[state=active]:bg-brand data-[state=active]:text-white"
-                            >
-                                通常
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                </div>
-
-                {/* ── Right: View mode + Save + Export ── */}
-                <div className="flex items-center gap-2">
-                    {/* View Mode (Advanced のみ) */}
-                    {editorMode === 'advanced' && (
-                        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'pc' | 'sp')}>
-                            <TabsList className="bg-secondary h-7">
-                                <TabsTrigger value="pc" className="h-5 px-1.5 data-[state=active]:bg-brand data-[state=active]:text-white">
-                                    <IconPC className="w-3.5 h-3.5" />
+                    {/* Center: AI Chat / Code Toggle */}
+                    <div className="flex justify-center w-1/3">
+                        <Tabs value={rightMode} onValueChange={(v) => setRightMode(v as 'chat' | 'code')}>
+                            <TabsList className="bg-slate-100 p-1 h-10 rounded-xl">
+                                <TabsTrigger
+                                    value="chat"
+                                    className="text-sm font-bold h-8 px-6 rounded-lg data-[state=active]:bg-white data-[state=active]:text-brand data-[state=active]:shadow-sm transition-all"
+                                >
+                                    <Bot className="w-4 h-4 mr-2" />
+                                    AIチャット
                                 </TabsTrigger>
-                                <TabsTrigger value="sp" className="h-5 px-1.5 data-[state=active]:bg-brand data-[state=active]:text-white">
-                                    <IconSP className="w-3.5 h-3.5" />
+                                <TabsTrigger
+                                    value="code"
+                                    className="text-sm font-bold h-8 px-6 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-emerald-400 data-[state=active]:shadow-sm transition-all"
+                                >
+                                    <Lock className="w-3.5 h-3.5 mr-2" />
+                                    コード編集
                                 </TabsTrigger>
                             </TabsList>
                         </Tabs>
-                    )}
+                    </div>
 
-                    <div className="h-5 w-px bg-border" />
+                    {/* Right: Actions */}
+                    <div className="flex items-center justify-end gap-3 w-1/3">
+                        <Button variant="outline" size="sm" className="h-9 w-[110px] font-bold text-slate-700 bg-white border-slate-200 hover:bg-slate-50 transition-all shrink-0" asChild>
+                            <Link href={`#preview`} target="_blank">
+                                <Eye className="w-4 h-4 mr-2 text-brand" />
+                                プレビュー
+                            </Link>
+                        </Button>
 
-                    {/* Save */}
-                    <Button
-                        size="sm"
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        variant="outline"
-                        className="h-7 text-xs border-border"
-                    >
-                        {saveMessage ? (
-                            <span className="flex items-center gap-1 text-emerald-600">
-                                <IconCheck className="w-3 h-3" />
-                                保存済み
-                            </span>
-                        ) : isSaving ? '保存中...' : '保存'}
-                    </Button>
+                        <div className="flex items-center min-w-[110px] justify-center shrink-0">
+                            {saveMessage ? (
+                                <span className="flex items-center gap-1.5 text-emerald-600 text-xs font-bold animate-in fade-in slide-in-from-right-4">
+                                    <CheckCircle2 className="w-4 h-4" />
+                                    {saveMessage}
+                                </span>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    onClick={handleSave}
+                                    disabled={isSaving}
+                                    className="bg-brand hover:bg-brand/90 text-white font-bold h-9 w-full shadow-sm transition-all"
+                                >
+                                    {isSaving ? (
+                                        <span className="flex items-center">
+                                            <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin mr-2" />
+                                            保存中...
+                                        </span>
+                                    ) : (
+                                        <><Save className="w-4 h-4 mr-2" /> 保存</>
+                                    )}
+                                </Button>
+                            )}
+                        </div>
 
-                    {/* Export */}
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                size="sm"
-                                onClick={handleExport}
-                                className="bg-amber hover:bg-amber/90 text-white h-7 text-xs px-3"
-                            >
-                                <IconDownload className="w-3.5 h-3.5 mr-1" />
-                                出力
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>ZIPファイルでエクスポート</TooltipContent>
-                    </Tooltip>
-                </div>
-            </header>
+                        <Popover open={isPublishPopoverOpen} onOpenChange={setIsPublishPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button size="sm" className="bg-amber hover:bg-amber/90 text-white font-bold h-9 w-[110px] shrink-0 shadow-sm transition-all">
+                                    <Globe className="w-4 h-4 mr-2" />
+                                    公開
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64 p-4 rounded-xl shadow-xl" align="end" sideOffset={8}>
+                                <h4 className="font-bold text-slate-800 mb-2">サイトを公開しますか？</h4>
+                                <p className="text-xs text-slate-500 mb-4">現在編集中の内容をWeb上に公開します。よろしいですか？</p>
+                                <div className="flex justify-end gap-2">
+                                    <Button variant="ghost" size="sm" onClick={() => setIsPublishPopoverOpen(false)} className="h-8 text-xs font-bold">キャンセル</Button>
+                                    <Button size="sm" className="h-8 text-xs bg-amber hover:bg-amber/90 text-white font-bold rounded-lg" onClick={handlePublish}>本当に公開する</Button>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
 
-            {/* ━━━━━━ Editor Body ━━━━━━ */}
-            {editorMode === 'simple' ? (
-                <SimpleEditor
-                    sections={sections}
-                    onSectionUpdate={handleSectionUpdate}
-                />
-            ) : (
-                <AdvancedEditor
-                    sections={sections}
-                    selectedSectionId={selectedSectionId}
-                    viewMode={viewMode}
-                    onSectionsReorder={handleSectionsReorder}
-                    onSectionUpdate={handleSectionUpdate}
-                    onSectionSelect={setSelectedSectionId}
-                    onSectionAdd={handleSectionAdd}
-                    onSectionDelete={handleSectionDelete}
-                    onMoveSection={handleMoveSection}
-                    onToggleVisibility={handleToggleVisibility}
-                    onRenameSection={handleRenameSection}
-                    onStyleUpdate={handleStyleUpdate}
-                />
-            )}
+                        <div className="w-px h-6 bg-slate-200 mx-1"></div>
 
-            {/* ━━━━━━ AI Chat Panel (Simple Mode のみ常時表示) ━━━━━━ */}
-            {editorMode === 'simple' && (
-                <AIChatPanel isOpen={aiPanelOpen} onToggle={() => setAiPanelOpen(!aiPanelOpen)} />
-            )}
+                        <Button size="icon" variant="ghost" className="h-9 w-9 text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg" onClick={() => setIsSettingsOpen(true)}>
+                            <Settings className="w-5 h-5" />
+                        </Button>
+                    </div>
+                </header>
 
-            {/* ━━━━━━ Upgrade Modal ━━━━━━ */}
-            <UpgradeModal
-                open={showUpgradeModal}
-                onOpenChange={setShowUpgradeModal}
-                featureName={upgradeFeature}
-            />
-        </div>
+                {/* ━━━ Main 3-Column Layout ━━━ */}
+                <main className="flex-1 flex overflow-hidden relative">
+
+                    {/* 1. Left Column: Tools & Settings */}
+                    <aside className="w-80 bg-white border-r border-slate-200 flex flex-col shrink-0 z-10 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] h-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        <div className="p-5 space-y-8 flex-1">
+
+                            {/* Responsive Toggle */}
+                            <div className="space-y-3">
+                                <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1">レスポンシブ確認</h3>
+                                <div className="flex bg-slate-100 p-1 rounded-xl">
+                                    <button
+                                        onClick={() => setViewMode('pc')}
+                                        className={`flex-1 flex flex-col items-center justify-center py-2 rounded-lg transition-all ${viewMode === 'pc' ? 'bg-white shadow-sm text-brand' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        <Monitor className="w-5 h-5 mb-1" />
+                                        <span className="text-[10px] font-bold">PC</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('tablet')}
+                                        className={`flex-1 flex flex-col items-center justify-center py-2 rounded-lg transition-all ${viewMode === 'tablet' ? 'bg-white shadow-sm text-brand' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        <Tablet className="w-5 h-5 mb-1" />
+                                        <span className="text-[10px] font-bold">Tablet</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('sp')}
+                                        className={`flex-1 flex flex-col items-center justify-center py-2 rounded-lg transition-all ${viewMode === 'sp' ? 'bg-white shadow-sm text-brand' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        <Smartphone className="w-5 h-5 mb-1" />
+                                        <span className="text-[10px] font-bold">Mobile</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* AI Tools */}
+                            <div className="space-y-3">
+                                <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 flex items-center gap-1.5">
+                                    AI 指示ツール
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <HelpCircle className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="bg-slate-900 text-white border-none shadow-xl max-w-xs">
+                                            <p className="font-medium text-xs">修正したい場所をクリックして、AIにピンポイントで指示を出せます。</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </h3>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={() => setActiveAiTool(activeAiTool === 'pin' ? null : 'pin')}
+                                        className={`flex flex-col items-center justify-center h-20 rounded-xl transition-colors shadow-sm relative ${activeAiTool === 'pin' ? 'bg-brand/10 border-2 border-brand text-brand' : 'bg-brand/5 border border-brand/20 text-brand hover:bg-brand/10'}`}>
+                                        <MapPin className="w-6 h-6 mb-2" />
+                                        <span className="text-[10px] font-bold">ピン留め</span>
+                                        {activeAiTool === 'pin' && <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand animate-pulse"></div>}
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveAiTool(activeAiTool === 'area' ? null : 'area')}
+                                        className={`flex flex-col items-center justify-center h-20 rounded-xl transition-colors shadow-sm relative ${activeAiTool === 'area' ? 'bg-brand/10 border-2 border-brand text-brand' : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+                                        <SquareDashed className="w-6 h-6 mb-2" />
+                                        <span className="text-[10px] font-bold">エリア選択</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveAiTool(activeAiTool === 'pen' ? null : 'pen')}
+                                        className={`flex flex-col items-center justify-center h-20 rounded-xl transition-colors shadow-sm relative ${activeAiTool === 'pen' ? 'bg-brand/10 border-2 border-brand text-brand' : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100'}`}>
+                                        <PenTool className="w-6 h-6 mb-2" />
+                                        <span className="text-[10px] font-bold">ペン書き</span>
+                                    </button>
+                                </div>
+                                <p className="text-[11px] text-slate-500 font-medium px-1">プレビュー上の要素をクリックしてピンを刺し、右のチャットで指示を出せます。</p>
+                            </div>
+
+                            {/* Brand Lock */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between px-1">
+                                    <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                        <Lock className={`w-3.5 h-3.5 ${isBrandLocked ? 'text-brand' : ''}`} /> ブランドロック
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <HelpCircle className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent side="right" className="bg-slate-900 text-white border-none shadow-xl max-w-xs">
+                                                <p className="font-medium text-xs">設定したカラーやフォントをAIの自動生成から保護します。</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </h3>
+                                    <Switch checked={isBrandLocked} onCheckedChange={setIsBrandLocked} className="scale-75 origin-right data-[state=checked]:bg-brand" />
+                                </div>
+                                <div className={`bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-4 transition-all duration-300 ${isBrandLocked ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+                                    <div>
+                                        <Label className="text-xs font-bold text-slate-600 flex items-center gap-1.5 mb-2">
+                                            <Palette className="w-4 h-4 text-slate-400" /> ベースカラー
+                                        </Label>
+                                        <div className="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200/60 shadow-sm">
+                                            <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-sm border border-slate-200 shrink-0 cursor-pointer hover:scale-105 transition-transform">
+                                                <input
+                                                    type="color"
+                                                    value={brandColor}
+                                                    onChange={(e) => setBrandColor(e.target.value)}
+                                                    disabled={isBrandLocked}
+                                                    className="absolute -top-2 -left-2 w-14 h-14 cursor-pointer"
+                                                />
+                                            </div>
+                                            <div className="flex-1 flex justify-between items-center px-1">
+                                                <span className="text-[10px] font-bold text-slate-400">HEX</span>
+                                                <span className="text-xs font-mono font-bold text-slate-700">{brandColor.toUpperCase()}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs font-bold text-slate-600 flex items-center gap-1.5 mb-2">
+                                            <Type className="w-4 h-4 text-slate-400" /> フォント
+                                        </Label>
+                                        <Select value={brandFont} onValueChange={setBrandFont} disabled={isBrandLocked}>
+                                            <SelectTrigger className="w-full bg-white text-sm font-bold text-slate-700 h-10 shadow-sm">
+                                                <SelectValue placeholder="フォントを選択" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="font-sans">Noto Sans JP (標準ゴシック)</SelectItem>
+                                                <SelectItem value="font-serif">Noto Serif JP (標準明朝)</SelectItem>
+                                                <SelectItem value="font-mono">システム等幅 (Mono)</SelectItem>
+                                                <SelectItem value="font-['Yu_Gothic','YuGothic',sans-serif]">游ゴシック (洗練・スッキリ)</SelectItem>
+                                                <SelectItem value="font-['Yu_Mincho','YuMincho',serif]">游明朝 (高級感・エレガント)</SelectItem>
+                                                <SelectItem value="font-[Arial,Helvetica,sans-serif]">Arial (モダン・英字メイン)</SelectItem>
+                                                <SelectItem value="font-['Comic_Sans_MS','Marker_Felt',cursive]">手書き風 (カジュアル・ポップ)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Template Store (Bottom) */}
+                        <div className="p-5 border-t border-slate-100 bg-slate-50 mt-auto shrink-0">
+                            <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest px-1 mb-3 flex justify-between items-center">
+                                <span>拡張テンプレートストア</span>
+                                <Badge className="bg-amber-100 text-amber-700 border-none text-[8px] px-1.5 py-0 font-bold">PRO</Badge>
+                            </h3>
+                            <div className="bg-white border rounded-xl overflow-hidden hover:border-brand/50 transition-colors cursor-pointer group">
+                                <div className="h-24 bg-slate-200 relative">
+                                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=400&h=200" alt="template" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                    <Badge className="absolute bottom-2 left-2 bg-black/60 text-white border-none font-bold">¥1,500</Badge>
+                                </div>
+                                <div className="p-3">
+                                    <h4 className="text-xs font-bold text-slate-800 mb-1">スタイリッシュLP パック</h4>
+                                    <p className="text-[10px] text-slate-500 mb-3">洗練されたコーポレート向けデザインのセクションセット。</p>
+                                    <Button size="sm" variant="outline" className="w-full h-7 text-xs font-bold">
+                                        <ShoppingCart className="w-3 h-3 mr-1" /> 購入する
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    {/* 2. Center Column: Canvas */}
+                    <section className={`flex-1 bg-slate-100/80 p-4 md:p-8 flex flex-col items-center overflow-y-auto overflow-x-hidden border-r border-slate-200 relative transition-colors duration-300 ${activeAiTool ? 'cursor-crosshair bg-slate-200/50' : ''}`}>
+                        {/* Responsive Wrapper */}
+                        <div
+                            className={`${getCanvasWidth()} min-h-full bg-white shadow-xl transition-all duration-300 ease-in-out origin-top border border-slate-200 relative`}
+                        >
+                            {/* Dummy Web Page Content */}
+                            <div className={`p-10 space-y-12 min-h-screen transition-all duration-300 ${brandFont}`}>
+                                {/* Dummy Hero */}
+                                <div className="text-center space-y-6 py-12">
+                                    <span className="text-brand font-bold tracking-wider text-sm">あなたのビジネスを加速する</span>
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight">
+                                        次世代のランディングページを<br />AIと共につくる。
+                                    </h1>
+                                    <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+                                        コードの知識は一切不要。プロンプトを入力するだけで、デザインから文章までAIが最適化します。
+                                    </p>
+
+                                    {/* Pinned Element Example */}
+                                    <div className="relative inline-block mt-4">
+                                        <Button
+                                            className="text-white h-12 px-8 rounded-full text-lg font-bold hover:brightness-110 transition-all border-none shadow-lg"
+                                            style={{ backgroundColor: brandColor }}
+                                        >
+                                            無料で試してみる
+                                        </Button>
+                                        {/* AI Tool Pin */}
+                                        <div className="absolute -top-6 -right-5 z-20 animate-bounce">
+                                            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center text-white shadow-lg relative">
+                                                <MapPin className="w-4 h-4" />
+                                                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-brand rotate-45"></span>
+                                            </div>
+                                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
+                                        </div>
+                                        {/* Select Box Outline */}
+                                        <div className="absolute -inset-2 border-2 border-brand border-dashed rounded-[32px] opacity-50 bg-brand/5 pointer-events-none"></div>
+                                    </div>
+                                </div>
+
+                                {/* Dummy Features */}
+                                <div className="grid md:grid-cols-3 gap-8 py-12">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl mb-4"></div>
+                                            <h3 className="text-lg font-bold text-slate-800 mb-2">圧倒的なスピード</h3>
+                                            <p className="text-sm text-slate-600 leading-relaxed">これまでは数日かかっていた作業が、AIの力で数十分に短縮されます。</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* 3. Right Column: AI Chat or Code Editor */}
+                    <aside className="w-96 bg-white shrink-0 z-10 shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.1)] flex flex-col">
+                        {rightMode === 'chat' ? (
+                            <>
+                                {/* Chat Header */}
+                                <div className="h-14 border-b border-slate-100 flex items-center px-5 shrink-0 bg-white">
+                                    <h2 className="text-sm font-black text-slate-800 flex items-center gap-2">
+                                        <Bot className="w-5 h-5 text-brand" /> アシスタント
+                                    </h2>
+                                </div>
+
+                                {/* Chat Messages */}
+                                <ScrollArea className="flex-1 p-5 bg-[#f5f7fa]">
+                                    <div className="space-y-6">
+                                        {/* AI Message */}
+                                        <div className="flex gap-3 max-w-[90%]">
+                                            <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
+                                                <Bot className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-slate-400 font-bold mb-1 ml-1">AIアシスタント</p>
+                                                <div className="bg-white p-3.5 rounded-2xl rounded-tl-none border border-slate-200/60 shadow-sm text-sm text-slate-700 leading-relaxed font-medium">
+                                                    こんにちは！LPの作成ですね。<br />
+                                                    まずはキャンバス上の要素にピン（📍）を刺して、どのように変更したいか教えてください！
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* User Message */}
+                                        <div className="flex gap-3 max-w-[90%] ml-auto justify-end">
+                                            <div className="flex flex-col items-end">
+                                                <p className="text-[10px] text-slate-400 font-bold mb-1 mr-1">あなた</p>
+                                                <div className="bg-brand p-3.5 rounded-2xl rounded-tr-none shadow-sm text-sm text-white leading-relaxed font-medium">
+                                                    ピンを刺したボタンの色を、もっと目立つオレンジ系のグラデーションに変更して。文字は「今すぐはじめる」にしてほしい。
+                                                </div>
+                                                <span className="text-[9px] text-slate-400 mt-1 font-medium mr-1">10:42</span>
+                                            </div>
+                                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 shrink-0 shadow-sm mt-1">
+                                                <User className="w-4 h-4" />
+                                            </div>
+                                        </div>
+
+                                        {/* AI Response (Generating) */}
+                                        <div className="flex gap-3 max-w-[90%]">
+                                            <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
+                                                <Bot className="w-4 h-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-slate-400 font-bold mb-1 ml-1">AIアシスタント</p>
+                                                <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-slate-200/60 shadow-sm flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 bg-brand rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                                    <div className="w-1.5 h-1.5 bg-brand rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                                    <div className="w-1.5 h-1.5 bg-brand rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                                    <span className="text-xs text-slate-500 font-bold ml-2">デザインを生成中...</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ScrollArea>
+
+                                {/* Chat Input */}
+                                <div className="p-4 bg-white border-t border-slate-100">
+                                    {/* Context Badge */}
+                                    <div className="mb-2 flex items-center gap-1.5">
+                                        <Badge className="bg-brand/10 text-brand hover:bg-brand/10 border-brand/20 text-[10px] px-2 py-0">
+                                            📍 選択中: メインCTAボタン
+                                        </Badge>
+                                    </div>
+                                    <div className="relative flex items-end bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-brand/30 focus-within:border-brand/50 transition-all">
+                                        <Textarea
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                            placeholder="AIに指示を出す..."
+                                            className="border-0 bg-transparent resize-none min-h-[60px] py-3 px-4 text-sm font-medium focus-visible:ring-0 shadow-none scrollbar-hide"
+                                        />
+                                        <Button size="icon" className="h-9 w-9 mb-2 mr-2 shrink-0 bg-brand hover:bg-brand/90 text-white rounded-lg shadow-sm" disabled={!chatInput.trim()}>
+                                            <Send className="w-4 h-4 ml-0.5" />
+                                        </Button>
+                                    </div>
+                                    <p className="text-[9px] text-center text-slate-400 mt-2 font-medium">Shift + Enter で改行</p>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex-1 flex flex-col bg-slate-900 border-l border-slate-800">
+                                {/* Code Editor Header */}
+                                <div className="h-14 border-b border-slate-800 flex items-center justify-between px-5 shrink-0">
+                                    <h2 className="text-sm font-black text-slate-200 flex items-center gap-2">
+                                        <Lock className="w-4 h-4 text-emerald-400" /> コードエディタ
+                                    </h2>
+                                    <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 bg-emerald-500/10 text-[10px]">Read Only (Beta)</Badge>
+                                </div>
+
+                                {/* Mock Code Area */}
+                                <ScrollArea className="flex-1 p-4">
+                                    <pre className="font-mono text-[12px] text-slate-300 leading-relaxed">
+                                        <span className="text-pink-400">import</span> {'{'} <span className="text-sky-300">Button</span> {'}'} <span className="text-pink-400">from</span> <span className="text-emerald-300">'@/components/ui/button'</span>;
+                                        <br /><br />
+                                        <span className="text-pink-400">export default function</span> <span className="text-yellow-200">HeroSection</span>() {'{'}
+                                        <span className="text-pink-400">return</span> (
+                                        &lt;<span className="text-blue-400">section</span> <span className="text-sky-300">className</span>=<span className="text-emerald-300">"py-12 text-center"</span>&gt;
+                                        &lt;<span className="text-blue-400">div</span> <span className="text-sky-300">className</span>=<span className="text-emerald-300">"max-w-2xl mx-auto"</span>&gt;
+                                        &lt;<span className="text-blue-400">h1</span> <span className="text-sky-300">className</span>=<span className="text-emerald-300">"text-4xl font-black"</span>&gt;
+                                        次世代の<br />
+                                        ランディングページ
+                                        &lt;/<span className="text-blue-400">h1</span>&gt;
+
+                                        {/* The pinned button */}
+                                        &lt;<span className="text-blue-400">Button</span>
+                                        <span className="text-sky-300">className</span>=<span className="text-emerald-300">"bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-bold h-12 px-8 rounded-full"</span>
+                                        &gt;
+                                        今すぐはじめる
+                                        &lt;/<span className="text-blue-400">Button</span>&gt;
+                                        &lt;/<span className="text-blue-400">div</span>&gt;
+                                        &lt;/<span className="text-blue-400">section</span>&gt;
+                                        );
+                                        {'}'}
+                                    </pre>
+                                </ScrollArea>
+                            </div>
+                        )}
+                    </aside>
+
+                </main>
+
+                {/* ━━━ Settings Modal ━━━ */}
+                <SettingsModal open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+            </div>
+        </TooltipProvider>
     );
 }

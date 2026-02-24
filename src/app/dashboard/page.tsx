@@ -402,8 +402,12 @@ export default function DashboardPage() {
                                                     プレビュー
                                                 </Button>
 
-                                                <Button variant="outline" className="w-full h-10 border-slate-200 text-slate-600 font-bold text-xs hover:bg-white hover:text-slate-900 rounded-lg justify-start px-4 shadow-sm group cursor-pointer">
-                                                    <IconLock className="w-4 h-4 mr-3 text-amber-500" />
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => router.push(`/dashboard/projects/${project.id}/analytics`)}
+                                                    className="w-full h-10 border-slate-200 text-slate-600 font-bold text-xs hover:bg-white hover:text-slate-900 rounded-lg justify-start px-4 shadow-sm group cursor-pointer"
+                                                >
+                                                    <IconLock className="w-4 h-4 mr-3 text-amber-500 group-hover:text-amber-600 transition-colors" />
                                                     <span className="flex-1 text-left">アクセス解析</span>
                                                     <div className="flex items-center">
                                                         <Badge variant="secondary" className="h-4 px-1 text-[9px] bg-amber-100 text-amber-700 border-none font-bold rounded shrink-0">PRO</Badge>

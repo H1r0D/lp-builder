@@ -238,7 +238,12 @@ export function DashboardShell({ children }: { children?: React.ReactNode }) {
                         予約システム管理
                         <Badge variant="secondary" className="ml-2 h-4 px-1.5 text-[9px] font-bold rounded border-none bg-slate-100 text-slate-400 tracking-wider">COMING SOON</Badge>
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-[34px] rounded-md px-4 text-[13px] font-medium text-slate-600 hover:text-slate-900 shrink-0 transition-all hover:bg-slate-50">
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => router.push('/dashboard/domains')}
+                        className={`h-[34px] rounded-md px-4 text-[13px] font-medium shrink-0 transition-all ${pathname.startsWith('/dashboard/domains') ? 'bg-slate-100 text-slate-900 border border-slate-200 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent'}`}
+                    >
                         独自ドメイン設定
                     </Button>
                 </div>
